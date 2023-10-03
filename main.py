@@ -1,43 +1,71 @@
-
+from fastapi import FastAPI, HTTPException
+from models import User,Role,Gender,UserUpdateRequest
 from typing import List
-from models import User,Gender,Role
-from uuid import uuid4
-from fastapi import FastAPI
+from uuid import uuid4,UUID
+
 
 app = FastAPI()
 
-db: List[User]= [
+db:List[User] = [
     User(
-        id = uuid4(),
-        first_name = "Chinmaya",
-        last_name = "Nanda",
+        id = UUID("e95ec74e-1b69-4021-8c9b-6420d8dccf5f"),
+        first_name = "chinmaya",
+        last_name = "nanda",
         gender = Gender.male,
         roles = [Role.student]
     ),
-    User(
-        id = uuid4(),
+        User(
+        id = UUID("152d4cf4-664d-4696-a1a2-ced0763d9ea5"),
         first_name = "Tanmaya",
-        last_name = "Nanda",
+        last_name = "nanda",
         gender = Gender.male,
-        roles = [Role.admin]
-    ),
-    User(
-        id = uuid4(),
-        first_name = "Geetanjali",
+        roles = [Role.user]
+        ),
+        User(
+        id = UUID("406e78c8-b723-4453-bf1c-3bceb9da8c0f"),
+        first_name = "Geetanjai",
         last_name = "Das",
-        #middle_name = "Gaydhar",
         gender = Gender.female,
-        roles = ["user"]
-    )
-
+        roles = [Role.admin]
+        )
 ]
 
 @app.get("/")
 def root():
-    return {"welcome":"chinmaya"}
+    return{"Welcome":"chinmaya"}
 
 @app.get("/api/v2/users")
-async def users():
+def users():
     return db
 
+@app.post("/api/v2/users")
+def register_user(user:User):
+    db.append(user)
+    return {user.id}
 
+@app.delete("/api/v2/users/{user_id}")
+def delete_user(user_id:UUID):
+    for user in db:
+        if user.id == user_id:
+            db.remove(user)
+            return 
+    raise HTTPException(
+        status_code= 404,
+        detail=f"User with user id {user.id} do not exists"    
+    )
+@app.put("/api/v2/users/{user_id}")
+async def update_user(user_update:UserUpdateRequest,user_id:UUID):
+    for user in db:
+        if user.id == user_id:
+            if user_update.first_name is not None:
+                user.first_name = user_update.first_name
+            if user_update.last_name is not None:
+                user.last_name = user_update.last_name    
+            if user_update.roles is not None:
+                user.roles = user_update.roles
+            return 
+    raise HTTPException(
+        status_code= 404,
+        detail=f"User with user id {user.id} do not exists"
+
+    )    
